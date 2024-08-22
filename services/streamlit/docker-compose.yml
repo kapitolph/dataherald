@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  streamlit-app:
+    container_name: streamlit
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - API_BASE_URL=http://host.docker.internal/api/v1
+    networks:
+      - dataherald_network
+networks:
+  dataherald_network:
+    external: true
