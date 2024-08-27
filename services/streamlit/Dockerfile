@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 # Set the working directory in the container
 WORKDIR /app
@@ -17,4 +17,4 @@ EXPOSE 8501
 ENV NAME World
 
 # Run streamlit when the container launches
-CMD ["streamlit", "run", "app.py"]
+CMD ["streamlit", "run", "app.py", "--browser.gatherUsageStats=false"]
