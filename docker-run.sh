@@ -7,20 +7,20 @@ start_services() {
 
     # Bring up services with Docker Compose
     docker-compose -p dataherald -f services/engine/docker-compose.yml up --build -d
-    docker-compose -p dataherald -f services/enterprise/docker-compose.yml up --build -d
-    docker-compose -p dataherald -f services/slackbot/docker-compose.yml up --build -d
-    docker-compose -p dataherald -f services/admin-console/docker-compose.yml up --build -d
-    docker-compose -p dataherald -f services/streamlit/docker-compose.yml up --build -d
+    # docker-compose -p dataherald -f services/enterprise/docker-compose.yml up --build -d
+    # docker-compose -p dataherald -f services/slackbot/docker-compose.yml up --build -d
+    # docker-compose -p dataherald -f services/admin-console/docker-compose.yml up --build -d
+    # docker-compose -p dataherald -f services/streamlit/docker-compose.yml up --build -d
 }
 
 # Function to take down services
 stop_services() {
     # Take down services with Docker Compose
-    docker-compose -p dataherald -f services/admin-console/docker-compose.yml down
-    docker-compose -p dataherald -f services/slackbot/docker-compose.yml down
-    docker-compose -p dataherald -f services/enterprise/docker-compose.yml down
+    # docker-compose -p dataherald -f services/admin-console/docker-compose.yml down
+    # docker-compose -p dataherald -f services/slackbot/docker-compose.yml down
+    # docker-compose -p dataherald -f services/enterprise/docker-compose.yml down
     docker-compose -p dataherald -f services/engine/docker-compose.yml down
-    docker-compose -p dataherald -f services/streamlit/docker-compose.yml down
+    # docker-compose -p dataherald -f services/streamlit/docker-compose.yml down
 
     # Remove Docker network
     docker network rm dataherald_network
