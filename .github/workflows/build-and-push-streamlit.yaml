@@ -1,4 +1,4 @@
-name: Build and Push Dataherald Engine
+name: Build and Push Dataherald Streamlit
 
 on:
   workflow_dispatch:
@@ -6,15 +6,15 @@ on:
     branches:
       - main
     paths:
-      - 'services/engine/**'
-      - '.github/workflows/build-and-push-dataherald.yaml'
+      - 'services/streamlit/**'
+      - '.github/workflows/build-and-push-streamlit.yaml'
 
 permissions:
   contents: read
   packages: write
 
 concurrency:
-  group: dataherald-engine-workflow
+  group: dataherald-streamlit-workflow
   cancel-in-progress: true
 
 jobs:
@@ -29,8 +29,8 @@ jobs:
       - name: Generate short sha
         uses: ./.github/actions/generate-short-sha
 
-  build-dataherald-engine:
-    name: Build Dataherald Engine
+  build-dataherald-frontend:
+    name: Build Dataherald Frontend
     needs: [generate-short-sha]
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -46,17 +46,17 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
-      - name: Build dataherald engine
+      - name: Build dataherald frontend
         uses: ./.github/actions/docker-build
         with:
           depot_project_id: ${{ vars.DEPOT_PROJECT_ID }}
-          build_context: ./services/engine
-          dockerfile_path: ./services/engine/Dockerfile
-          image_tags: ${{ env.REGISTRY }}/engine:${{ env.SHORT_SHA }}
+          build_context: ./services/streamlit
+          dockerfile_path: ./services/streamlit/Dockerfile
+          image_tags: ${{ env.REGISTRY }}/streamlit:${{ env.SHORT_SHA }}
 
-  deploy-dataherald-engine:
-    name: Deploy Dataherald Engine
-    needs: [build-dataherald-engine, generate-short-sha]
+  deploy-dataherald-frontend:
+    name: Deploy Dataherald Frontend
+    needs: [build-dataherald-frontend, generate-short-sha]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -65,9 +65,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: Deploy Dataherald Engine
+      - name: Deploy Dataherald Frontend
         uses: ./.github/actions/devtron-container-deploy
         with:
-          workflow_ids: '127'
-          docker_image: ${{ env.REGISTRY }}/engine:${{ env.SHORT_SHA }}
+          workflow_ids: '128'
+          docker_image: ${{ env.REGISTRY }}/streamlit:${{ env.SHORT_SHA }}
           devtron_cli_token: ${{ secrets.DEVTRON_TOKEN }}
