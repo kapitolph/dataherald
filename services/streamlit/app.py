@@ -59,7 +59,15 @@ def sql_query_generator():
     selected_conn = st.selectbox("Select Database Connection", connection_options)
     selected_db_id = selected_conn.split("(ID: ")[-1].strip(")")
 
-    query = st.text_area("Enter your query:", height=100)
+    # Initialize session state for query if it doesn't exist
+    if 'query' not in st.session_state:
+        st.session_state.query = ""
+
+    # Use the stored query to initialize the text area
+    query = st.text_area("Enter your query:", value=st.session_state.query, height=100, key="query_input")
+    
+    # Update the stored query when the user types
+    st.session_state.query = query
 
     if st.button('Generate SQL'):
         if not query:
@@ -685,6 +693,7 @@ def generate_sql(db_connection_id, query_text):
     }
     response = requests.post(url, json=payload)
     if response.status_code in [200, 201]:
+        print(f"SQL generation response: {response}")
         return response.json()
     else:
         st.error(f"Failed to generate SQL: {response.status_code}")
