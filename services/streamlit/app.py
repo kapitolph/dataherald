@@ -1,7 +1,4 @@
 import streamlit as st
-
-st.set_page_config(page_title="Dataherald", page_icon="🤖", layout="wide")
-
 import requests
 import json
 import pandas as pd
@@ -13,14 +10,16 @@ import math
 
 load_dotenv()
 
+st.set_page_config(page_title="Dataherald", page_icon="🤖", layout="wide")
+
 # Set the API base URL
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost/api/v1")
 
 def main():
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["SQL Query Generator", "Admin"])
+    page = st.sidebar.radio("Go to", ["Home", "Admin"])
 
-    if page == "SQL Query Generator":
+    if page == "Home":
         sql_query_generator()
     elif page == "Admin":
         admin_page()
@@ -43,7 +42,7 @@ def estimate_cost(tokens_used, model="gpt-4o-2024-08-06"):
     return cost
 
 def sql_query_generator():
-    st.title("SQL Query Generator")
+    st.title("Ask Me Anything")
 
     db_connections = get_database_connections()
 
