@@ -100,7 +100,6 @@ def admin_page():
     if admin_option == "Database Connections":
         database_connections_page()
     elif admin_option == "Sync Database Schema":
-        st.header("Sync Database Schema")
         sync_database_schema()
     elif admin_option == "Manage Golden SQLs":
         manage_golden_sqls()
