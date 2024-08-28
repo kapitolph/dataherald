@@ -67,6 +67,8 @@ def sql_query_generator():
             st.error('Please enter a query.')
             return
 
+        st.info(f"Query: {query}")
+
         with st.spinner('Generating SQL...'):
             response = generate_sql(selected_db_id, query)
             if response and 'sql_generation_id' in response:
@@ -74,18 +76,18 @@ def sql_query_generator():
                 result = get_generated_sql(sql_generation_id)
                 if result:
                     st.subheader('Results:')
-                    st.write(response.get('text', 'No result text available'))
+                    st.info(response.get('text', 'No result text available'))
                     st.subheader('Generated SQL:')
                     st.code(result.get('sql', 'No SQL generated'), language='sql')
 
                     # Display tokens used
                     tokens_used = result.get('tokens_used')
                     if tokens_used is not None:
-                        st.info(f"Tokens used: {tokens_used}")
+                        st.write(f"Tokens used: {tokens_used}")
                 
                         estimated_cost = estimate_cost(tokens_used, "gpt-4o-2024-08-06")
                         if estimated_cost is not None:
-                            st.info(f"Estimated cost: ${estimated_cost:.5f}")
+                            st.write(f"Estimated cost: ${estimated_cost:.5f}")
             else:
                 st.error('Failed to generate SQL. Please try again.')
     
