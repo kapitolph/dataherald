@@ -1,0 +1,116 @@
+name: Build and Push Dataherald
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'services/engine/**'
+      - '.github/workflows/build-and-push-dataherald.yaml'
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: dataherald-workflow
+  cancel-in-progress: true
+
+jobs:
+  generate-short-sha:
+    name: Generate Short SHA
+    runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ env.SHORT_SHA }}
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Generate short sha
+        uses: ./.github/actions/generate-short-sha
+
+  build-dataherald-engine:
+    name: Build Dataherald Engine
+    needs: [generate-short-sha]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    env:
+      REGISTRY: 'ghcr.io/kapitolph/dataherald'
+      SERVICE_ACCOUNT_USERNAME: ${{ vars.SERVICE_ACCOUNT_USERNAME }}
+      REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+      SHORT_SHA: ${{ needs.generate-short-sha.outputs.short_sha }}
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+      - name: Build dataherald engine
+        uses: ./.github/actions/docker-build
+        with:
+          depot_project_id: ${{ vars.DEPOT_PROJECT_ID }}
+          build_context: ./services/engine
+          dockerfile_path: ./services/engine/Dockerfile
+          image_tags: ${{ env.REGISTRY }}/engine:${{ env.SHORT_SHA }}
+
+  # build-dataherald-frontend:
+  #   name: Build Dataherald Frontend
+  #   needs: [generate-short-sha]
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 60
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #     id-token: write
+  #   env:
+  #     REGISTRY: 'ghcr.io/kapitolph/dataherald'
+  #     SERVICE_ACCOUNT_USERNAME: ${{ vars.SERVICE_ACCOUNT_USERNAME }}
+  #     REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+  #     SHORT_SHA: ${{ needs.generate-short-sha.outputs.short_sha }}
+  #   steps:
+  #     - name: Check out repo
+  #       uses: actions/checkout@v4
+  #     - name: Build dataherald frontend
+  #       uses: ./.github/actions/docker-build
+  #       with:
+  #         depot_project_id: ${{ vars.DEPOT_PROJECT_ID }}
+  #         build_context: ./services/streamlit
+  #         dockerfile_path: ./services/streamlit/Dockerfile
+  #         image_tags: ${{ env.REGISTRY }}/streamlit:${{ env.SHORT_SHA }}
+
+  deploy-dataherald-engine:
+    name: Deploy Dataherald Engine
+    needs: [build-dataherald-engine, generate-short-sha]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      REGISTRY: 'ghcr.io/kapitolph/dataherald'
+      SHORT_SHA: ${{ needs.generate-short-sha.outputs.short_sha }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Deploy Dataherald Engine
+        uses: ./.github/actions/devtron-container-deploy
+        with:
+          workflow_ids: '127'
+          docker_image: ${{ env.REGISTRY }}/engine:${{ env.SHORT_SHA }}
+          devtron_cli_token: ${{ secrets.DEVTRON_TOKEN }}
+
+  # deploy-dataherald-frontend:
+  #   name: Deploy Dataherald Frontend
+  #   needs: [build-dataherald-frontend, generate-short-sha]
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 60
+  #   env:
+  #     REGISTRY: 'ghcr.io/kapitolph/dataherald'
+  #     SHORT_SHA: ${{ needs.generate-short-sha.outputs.short_sha }}
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
+  #     - name: Deploy Dataherald Frontend
+  #       uses: ./.github/actions/devtron-container-deploy
+  #       with:
+  #         workflow_ids: '128'
+  #         docker_image: ${{ env.REGISTRY }}/streamlit:${{ env.SHORT_SHA }}
+  #         devtron_cli_token: ${{ secrets.DEVTRON_TOKEN }}
