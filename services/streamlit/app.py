@@ -60,7 +60,13 @@ def sql_query_generator():
     if 'selected_conn' not in st.session_state:
         st.session_state.selected_conn = connection_options[0] if connection_options else None
 
-    selected_conn = st.selectbox("Select Database Connection", connection_options)
+    # Use selectbox with key and retrieve the current value from session state
+    selected_conn = st.selectbox(
+        "Select Database Connection", 
+        connection_options,
+        key="db_connection_select",
+        index=connection_options.index(st.session_state.selected_conn) if st.session_state.selected_conn in connection_options else 0
+    )
 
     # Update session state when selection changes
     if selected_conn != st.session_state.selected_conn:
