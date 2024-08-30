@@ -55,27 +55,36 @@ def sql_query_generator():
     if not connection_options:
         st.warning("No valid database connections found.")
         return
+    
+    # Initialize session state for selected connection
+    if 'selected_conn' not in st.session_state:
+        st.session_state.selected_conn = connection_options[0] if connection_options else None
 
     selected_conn = st.selectbox("Select Database Connection", connection_options)
+
+    # Update session state when selection changes
+    if selected_conn != st.session_state.selected_conn:
+        st.session_state.selected_conn = selected_conn
+
     selected_db_id = selected_conn.split("(ID: ")[-1].strip(")")
 
     # Use the stored query to initialize the text area
     query = st.text_area("Enter your query:", height=100)
 
-    if st.button('Generate SQL'):
+    if st.button('Ask Question'):
         if not query:
-            st.error('Please enter a query.')
+            st.error('Please enter a question.')
             return
 
         st.info(f"Query: {query}")
 
-        with st.spinner('Generating SQL...'):
+        with st.spinner('Generating answer...'):
             response = generate_sql(selected_db_id, query)
             if response and 'sql_generation_id' in response:
                 sql_generation_id = response['sql_generation_id']
                 result = get_generated_sql(sql_generation_id)
                 if result:
-                    st.subheader('Results:')
+                    st.subheader('Answer:')
                     st.info(response.get('text', 'No result text available'))
                     st.subheader('Generated SQL:')
                     st.code(result.get('sql', 'No SQL generated'), language='sql')
@@ -89,7 +98,7 @@ def sql_query_generator():
                         if estimated_cost is not None:
                             st.write(f"Estimated cost: ${estimated_cost:.5f}")
             else:
-                st.error('Failed to generate SQL. Please try again.')
+                st.error('Failed to generate an answer. Please try again.')
     
 def admin_page():
     st.title("Admin Page")
