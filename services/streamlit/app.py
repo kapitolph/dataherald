@@ -391,6 +391,31 @@ def sync_database_schema():
         st.error(f"Failed to fetch table descriptions: {response.status_code}")
         st.error(f"Error message: {response.text}")
 
+def get_pagination_state(key, total_pages):
+    # Initialize the session state
+    if f"{key}_page" not in st.session_state:
+        st.session_state[f"{key}_page"] = 1
+    
+    def update_page(new_page):
+        st.session_state[f"{key}_page"] = max(1, min(new_page, total_pages))
+    
+    current_page = st.session_state[f"{key}_page"]
+    
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        st.button("First", key=f"{key}_first", on_click=update_page, args=(1,), disabled=(current_page == 1))
+    with col2:
+        st.button("Previous", key=f"{key}_prev", on_click=update_page, args=(current_page - 1,), disabled=(current_page == 1))
+    with col3:
+        st.write(f"Page {current_page} of {total_pages}")
+    with col4:
+        st.button("Next", key=f"{key}_next", on_click=update_page, args=(current_page + 1,), disabled=(current_page == total_pages))
+    with col5:
+        st.button("Last", key=f"{key}_last", on_click=update_page, args=(total_pages,), disabled=(current_page == total_pages))
+    
+    return current_page
+
+
 def manage_golden_sqls():
     st.header("Manage Golden SQLs")
 
@@ -435,18 +460,14 @@ def manage_golden_sqls():
             filtered_sqls = [sql for sql in golden_sqls if search_term.lower() in sql['prompt_text'].lower()]
             
             # Pagination
-            items_per_page = 10
-            total_pages = math.ceil(len(filtered_sqls) / items_per_page)
+            items_per_page = 5
+            total_pages = max(1, math.ceil(len(filtered_sqls) / items_per_page))
             
-            col1, col2, col3 = st.columns([1, 3, 1])
-            with col2:
-                page = st.selectbox("Page", options=range(1, total_pages + 1), key="golden_sql_page")
+            page = get_pagination_state("golden_sql", total_pages)
 
             start_idx = (page - 1) * items_per_page
             end_idx = start_idx + items_per_page
             current_sqls = filtered_sqls[start_idx:end_idx]
-
-            st.write(f"Showing {len(current_sqls)} of {len(filtered_sqls)} Golden SQLs")
 
             for sql in current_sqls:
                 col1, col2 = st.columns([5, 1])
@@ -457,23 +478,6 @@ def manage_golden_sqls():
                     if st.button("Delete", key=f"delete_{sql['id']}"):
                         delete_golden_sql(sql['id'])
                 st.markdown("---")
-
-            # Pagination controls
-            col1, col2, col3, col4, col5 = st.columns(5)
-            with col1:
-                if st.button("First", disabled=page==1, key="golden_sql_first"):
-                    page = 1
-            with col2:
-                if st.button("Previous", disabled=page==1, key="golden_sql_prev"):
-                    page -= 1
-            with col3:
-                st.write(f"Page {page} of {total_pages}")
-            with col4:
-                if st.button("Next", disabled=page==total_pages, key="golden_sql_next"):
-                    page += 1
-            with col5:
-                if st.button("Last", disabled=page==total_pages, key="golden_sql_last"):
-                    page = total_pages
 
     # Form to add new Golden SQL
     st.subheader("Add New Golden SQL")
@@ -560,17 +564,13 @@ def manage_table_descriptions():
 
     # Pagination
     items_per_page = 10
-    total_pages = math.ceil(len(table_descriptions) / items_per_page)
+    total_pages = max(1, math.ceil(len(table_descriptions) / items_per_page))
     
-    col1, col2, col3 = st.columns([1, 3, 1])
-    with col2:
-        page = st.selectbox("Page", options=range(1, total_pages + 1))
+    page = get_pagination_state("table_desc", total_pages)
 
     start_idx = (page - 1) * items_per_page
     end_idx = start_idx + items_per_page
     current_tables = table_descriptions[start_idx:end_idx]
-
-    st.write(f"Showing {len(current_tables)} of {len(table_descriptions)} tables")
 
     # Display and edit table descriptions
     for table in current_tables:
@@ -581,23 +581,6 @@ def manage_table_descriptions():
             with col2:
                 if st.button("Update", key=f"update_{table['id']}"):
                     update_table_description(table['id'], new_description)
-
-    # Pagination controls
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        if st.button("First", disabled=page==1):
-            page = 1
-    with col2:
-        if st.button("Previous", disabled=page==1):
-            page -= 1
-    with col3:
-        st.write(f"Page {page} of {total_pages}")
-    with col4:
-        if st.button("Next", disabled=page==total_pages):
-            page += 1
-    with col5:
-        if st.button("Last", disabled=page==total_pages):
-            page = total_pages
 
 def update_table_description(table_id, new_description):
     url = f"{API_BASE_URL}/table-descriptions/{table_id}"
