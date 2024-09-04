@@ -419,7 +419,7 @@ def manage_golden_sqls():
     selected_db_id = next((conn['id'] for conn in db_connections if conn['alias'] == selected_db), None)
 
     # Fetch Golden SQLs for the selected database
-    response = requests.get(f"{API_BASE_URL}/golden-sqls", params={"db_connection_id": selected_db_id})
+    response = requests.get(f"{API_BASE_URL}/golden-sqls", params={"db_connection_id": selected_db_id, "limit": 100})
     if response.status_code != 200:
         st.error(f"Failed to fetch Golden SQLs: {response.status_code}")
         return
@@ -434,7 +434,21 @@ def manage_golden_sqls():
             search_term = st.text_input("Search Golden SQLs", "")
             filtered_sqls = [sql for sql in golden_sqls if search_term.lower() in sql['prompt_text'].lower()]
             
-            for sql in filtered_sqls:
+            # Pagination
+            items_per_page = 10
+            total_pages = math.ceil(len(filtered_sqls) / items_per_page)
+            
+            col1, col2, col3 = st.columns([1, 3, 1])
+            with col2:
+                page = st.selectbox("Page", options=range(1, total_pages + 1), key="golden_sql_page")
+
+            start_idx = (page - 1) * items_per_page
+            end_idx = start_idx + items_per_page
+            current_sqls = filtered_sqls[start_idx:end_idx]
+
+            st.write(f"Showing {len(current_sqls)} of {len(filtered_sqls)} Golden SQLs")
+
+            for sql in current_sqls:
                 col1, col2 = st.columns([5, 1])
                 with col1:
                     st.markdown(f"**Prompt:** {sql['prompt_text']}")
@@ -443,6 +457,23 @@ def manage_golden_sqls():
                     if st.button("Delete", key=f"delete_{sql['id']}"):
                         delete_golden_sql(sql['id'])
                 st.markdown("---")
+
+            # Pagination controls
+            col1, col2, col3, col4, col5 = st.columns(5)
+            with col1:
+                if st.button("First", disabled=page==1, key="golden_sql_first"):
+                    page = 1
+            with col2:
+                if st.button("Previous", disabled=page==1, key="golden_sql_prev"):
+                    page -= 1
+            with col3:
+                st.write(f"Page {page} of {total_pages}")
+            with col4:
+                if st.button("Next", disabled=page==total_pages, key="golden_sql_next"):
+                    page += 1
+            with col5:
+                if st.button("Last", disabled=page==total_pages, key="golden_sql_last"):
+                    page = total_pages
 
     # Form to add new Golden SQL
     st.subheader("Add New Golden SQL")
