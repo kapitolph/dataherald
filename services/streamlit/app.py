@@ -465,19 +465,21 @@ def manage_golden_sqls():
             
             page = get_pagination_state("golden_sql", total_pages)
 
+            st.markdown("---")
+
             start_idx = (page - 1) * items_per_page
             end_idx = start_idx + items_per_page
             current_sqls = filtered_sqls[start_idx:end_idx]
 
             for sql in current_sqls:
                 col1, col2 = st.columns([5, 1])
+                st.markdown("---")
                 with col1:
                     st.markdown(f"**Prompt:** {sql['prompt_text']}")
                     st.code(sql['sql'], language='sql')
                 with col2:
                     if st.button("Delete", key=f"delete_{sql['id']}"):
                         delete_golden_sql(sql['id'])
-                st.markdown("---")
 
     # Form to add new Golden SQL
     st.subheader("Add New Golden SQL")
